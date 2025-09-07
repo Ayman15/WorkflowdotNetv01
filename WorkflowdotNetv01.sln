@@ -1,11 +1,21 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35707.178 d17.12
+VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkflowLib", "WorkflowLib\WorkflowLib.csproj", "{B0F7E6D6-37FB-4C7B-BE10-0BEF76435CC4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkflowDesigner", "WorkflowDesigner\WorkflowDesigner.csproj", "{E2625BAA-A121-4F6B-98D5-7AFB8907E5EA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkflowConsoleApp", "WorkflowConsoleApp\WorkflowConsoleApp.csproj", "{8EE9B0A1-1C6E-4657-B4E4-35BAEF232D05}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WF_WebAPI", "WF_WebAPI\WF_WebAPI.csproj", "{06B485D6-B7F1-4CD3-A9A4-DC5177A8E5B6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LaunchExeFile", "LaunchExeFile\LaunchExeFile.csproj", "{24B7F3DD-7F9D-48F1-BE79-E2DD66921A71}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MXPI_RemoteRun", "MXPI_RemoteRun\MXPI_RemoteRun.csproj", "{BBBD83AE-174F-42D6-AECD-ED361B465A2E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WF_WebAPI01", "WF_WebAPI01\WF_WebAPI01.csproj", "{5F78414F-433B-40C1-A168-048AEC6A4B47}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +31,26 @@ Global
 		{E2625BAA-A121-4F6B-98D5-7AFB8907E5EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E2625BAA-A121-4F6B-98D5-7AFB8907E5EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E2625BAA-A121-4F6B-98D5-7AFB8907E5EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EE9B0A1-1C6E-4657-B4E4-35BAEF232D05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EE9B0A1-1C6E-4657-B4E4-35BAEF232D05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EE9B0A1-1C6E-4657-B4E4-35BAEF232D05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EE9B0A1-1C6E-4657-B4E4-35BAEF232D05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06B485D6-B7F1-4CD3-A9A4-DC5177A8E5B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06B485D6-B7F1-4CD3-A9A4-DC5177A8E5B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06B485D6-B7F1-4CD3-A9A4-DC5177A8E5B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06B485D6-B7F1-4CD3-A9A4-DC5177A8E5B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24B7F3DD-7F9D-48F1-BE79-E2DD66921A71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24B7F3DD-7F9D-48F1-BE79-E2DD66921A71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24B7F3DD-7F9D-48F1-BE79-E2DD66921A71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24B7F3DD-7F9D-48F1-BE79-E2DD66921A71}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBBD83AE-174F-42D6-AECD-ED361B465A2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBBD83AE-174F-42D6-AECD-ED361B465A2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBBD83AE-174F-42D6-AECD-ED361B465A2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBBD83AE-174F-42D6-AECD-ED361B465A2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F78414F-433B-40C1-A168-048AEC6A4B47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F78414F-433B-40C1-A168-048AEC6A4B47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F78414F-433B-40C1-A168-048AEC6A4B47}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F78414F-433B-40C1-A168-048AEC6A4B47}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

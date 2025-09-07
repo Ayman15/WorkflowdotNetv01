@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Remove explicit Microsoft.OpenApi* lines -->
+    <PackageReference Include="Quartz" Version="3.15.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
+    <!-- Only keep this if you actually call builder.Host.UseWindowsService(); 
+         and prefer matching the TF (8.x for net8.0). Otherwise delete it. -->
+    <!-- <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.0" /> -->
+
+    <PackageReference Include="WorkflowEngine.NETCore-Core" Version="18.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WorkflowLib\WorkflowLib.csproj" />
+  </ItemGroup>
+
+</Project>
