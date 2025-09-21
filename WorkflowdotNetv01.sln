@@ -1,11 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35707.178 d17.12
+VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkflowLib", "WorkflowLib\WorkflowLib.csproj", "{B0F7E6D6-37FB-4C7B-BE10-0BEF76435CC4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkflowDesigner", "WorkflowDesigner\WorkflowDesigner.csproj", "{E2625BAA-A121-4F6B-98D5-7AFB8907E5EA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workflow_ConsoleApp", "Workflow_ConsoleApp\Workflow_ConsoleApp.csproj", "{295D604B-B834-4CB5-8B9F-94FBFFFF77A2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workflow_WebAPI", "Workflow_WebAPI\Workflow_WebAPI.csproj", "{F144C53B-00B4-4D8C-B3BC-94F9F84FFE8E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WF_WebAPI01", "WF_WebAPI01\WF_WebAPI01.csproj", "{53FCE03D-0398-1749-4632-3A60E3715389}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AF_SCADA_Comparison", "AF_SCADA_Comparison\AF_SCADA_Comparison.csproj", "{B6AC330C-013A-435F-80F2-9D65A9F63390}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,8 +29,27 @@ Global
 		{E2625BAA-A121-4F6B-98D5-7AFB8907E5EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E2625BAA-A121-4F6B-98D5-7AFB8907E5EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E2625BAA-A121-4F6B-98D5-7AFB8907E5EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{295D604B-B834-4CB5-8B9F-94FBFFFF77A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{295D604B-B834-4CB5-8B9F-94FBFFFF77A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{295D604B-B834-4CB5-8B9F-94FBFFFF77A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{295D604B-B834-4CB5-8B9F-94FBFFFF77A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F144C53B-00B4-4D8C-B3BC-94F9F84FFE8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F144C53B-00B4-4D8C-B3BC-94F9F84FFE8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F144C53B-00B4-4D8C-B3BC-94F9F84FFE8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F144C53B-00B4-4D8C-B3BC-94F9F84FFE8E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53FCE03D-0398-1749-4632-3A60E3715389}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53FCE03D-0398-1749-4632-3A60E3715389}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53FCE03D-0398-1749-4632-3A60E3715389}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53FCE03D-0398-1749-4632-3A60E3715389}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B6AC330C-013A-435F-80F2-9D65A9F63390}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6AC330C-013A-435F-80F2-9D65A9F63390}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6AC330C-013A-435F-80F2-9D65A9F63390}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6AC330C-013A-435F-80F2-9D65A9F63390}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6B4EB960-395C-4653-8685-0892EFADC8B4}
 	EndGlobalSection
 EndGlobal
