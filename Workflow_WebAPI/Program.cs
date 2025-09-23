@@ -445,42 +445,42 @@ public class ApprovalsController : ControllerBase
             _log.LogInformation("Command executed: pid={Pid}, command={Command}", pid, wanted);
             _ = _audit.Info("command_executed", new { pid, command = wanted });
 
-            if (wanted == "Approve")
-            {
-                // Run both in parallel (fire both tasks and await)
-                var tasks = new List<Task>
-                {
-                    RunLocalExeAsync(pid),
-                    InvokeRemoteRunnerAsync(pid)
-                };
-                await Task.WhenAll(tasks);
-            }
-
-            return Ok($"Decision recorded as {wanted.ToUpperInvariant()}.");
-            //if (wanted == "approve")
+            //if (wanted == "Approve")
             //{
-            //    // kick off background work and do not await it
-            //    _ = task.run(async () =>
+            //    // Run both in parallel (fire both tasks and await)
+            //    var tasks = new List<Task>
             //    {
-            //        try
-            //        {
-            //            await runlocalexeasync(pid);
-            //            await invokeremoterunnerasync(pid);
-            //        }
-            //        catch (exception bgex)
-            //        {
-            //            // log any background failure
-            //            var sp = httpcontext.requestservices;
-            //            var audit = sp.getrequiredservice<iauditlogger>();
-            //            var log = sp.getrequiredservice<ilogger<approvalscontroller>>();
-            //            log.logerror(bgex, "background approve side-effects failed for {pid}", pid);
-            //            await audit.error("approve_background_failed", bgex, new { pid });
-            //        }
-            //    });
+            //        RunLocalExeAsync(pid),
+            //        InvokeRemoteRunnerAsync(pid)
+            //    };
+            //    await Task.WhenAll(tasks);
             //}
 
-            //// return immediately to the client
-            //return accepted(new { message = $"decision recorded as {wanted}", pid });
+            //return Ok($"Decision recorded as {wanted.ToUpperInvariant()}.");
+            if (wanted == "approve")
+            {
+                // kick off background work and do not await it
+                _ = task.run(async () =>
+                {
+                    try
+                    {
+                        await runlocalexeasync(pid);
+                        await invokeremoterunnerasync(pid);
+                    }
+                    catch (exception bgex)
+                    {
+                        // log any background failure
+                        var sp = httpcontext.requestservices;
+                        var audit = sp.getrequiredservice<iauditlogger>();
+                        var log = sp.getrequiredservice<ilogger<approvalscontroller>>();
+                        log.logerror(bgex, "background approve side-effects failed for {pid}", pid);
+                        await audit.error("approve_background_failed", bgex, new { pid });
+                    }
+                });
+            }
+
+            // return immediately to the client
+            return Ok(new { message = $"decision recorded as {wanted}", pid });
 
         }
         catch (Exception ex)
