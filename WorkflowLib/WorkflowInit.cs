@@ -6,6 +6,8 @@ using OptimaJet.Workflow.Core.Runtime;
 using OptimaJet.Workflow.DbPersistence;
 using OptimaJet.Workflow.Core.Persistence;
 using OptimaJet.Workflow.Migrator;
+using System.Configuration;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 public static class WorkflowInit
 {
@@ -17,11 +19,14 @@ public static class WorkflowInit
     }
 
     public static string ConnectionString { get; set; }
+    
+    
 
-    private static WorkflowRuntime InitWorkflowRuntime()
+    public static WorkflowRuntime InitWorkflowRuntime()
     {
         // TODO Uncomment for .NET Framework if you don't set ConnectionString externally.
         //ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ConnectionString"].ConnectionString;
+        ConnectionString = "Data Source=CXPISQL01.agiba.local;Initial Catalog=WorkflowDB01;Integrated Security=True;TrustServerCertificate=True";
 
         if (string.IsNullOrEmpty(ConnectionString))
         {
@@ -49,12 +54,12 @@ public static class WorkflowInit
 
         var plugin = new OptimaJet.Workflow.Plugins.BasicPlugin();
         // Settings for SendEmail actions
-        // plugin.Setting_Mailserver = "smtp.yourserver.com";
-        // plugin.Setting_MailserverPort = 25;
-        // plugin.Setting_MailserverFrom = "from@yourserver.com";
-        // plugin.Setting_MailserverLogin = "login@yourserver.com";
-        // plugin.Setting_MailserverPassword = "pass";
-        // plugin.Setting_MailserverSsl = true;
+        plugin.Setting_Mailserver = "mail.agiba.com";
+        plugin.Setting_MailserverPort = 25;
+        plugin.Setting_MailserverFrom = "pi@agiba.com";
+        plugin.Setting_MailserverLogin = "svpi";
+        plugin.Setting_MailserverPassword = "ict@agiba";
+        plugin.Setting_MailserverSsl = false;
         runtime.WithPlugin(plugin);
 
         // events subscription

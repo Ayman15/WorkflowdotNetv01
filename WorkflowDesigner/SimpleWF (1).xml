@@ -1,0 +1,77 @@
+<Process Name="SimpleWF" CanBeInlined="false" Tags="" LogEnabled="true">
+  <Designer />
+  <Parameters>
+    <Parameter Name="To" Type="String" Purpose="Temporary" />
+    <Parameter Name="Subject" Type="String" Purpose="Temporary" />
+    <Parameter Name="Body" Type="String" Purpose="Temporary" />
+  </Parameters>
+  <Commands>
+    <Command Name="Start" />
+    <Command Name="Approve" />
+    <Command Name="Reject" />
+  </Commands>
+  <Activities>
+    <Activity Name="Initial" State="Initial" IsInitial="true" IsFinal="false" IsForSetState="true" IsAutoSchemeUpdate="false">
+      <Designer X="50" Y="150" Hidden="false" />
+    </Activity>
+    <Activity Name="WaitingForDecision" State="WaitingForDecision" IsInitial="false" IsFinal="false" IsForSetState="true" IsAutoSchemeUpdate="false">
+      <Designer X="550" Y="150" Hidden="false" />
+    </Activity>
+    <Activity Name="Approved" State="Approved" OnEntry="LaunchExeAction" IsFinal="true">
+      <Designer X="800" Y="90" Hidden="false" />
+    </Activity>
+    <Activity Name="Rejected" State="Rejected" IsFinal="true">
+      <Designer X="800" Y="210" Hidden="false" />
+    </Activity>
+    <Activity Name="Final" State="Final" IsInitial="false" IsFinal="true" IsForSetState="true" IsAutoSchemeUpdate="false">
+      <Designer X="1050" Y="150" Hidden="false" />
+    </Activity>
+  </Activities>
+  <Transitions>
+    <Transition Name="Wait_to_Approved" To="Approved" From="WaitingForDecision" Classifier="Direct" AllowConcatenationType="And" RestrictConcatenationType="And" ConditionsConcatenationType="And" DisableParentStateControl="false">
+      <Triggers>
+        <Trigger Type="Command" NameRef="Approve" />
+      </Triggers>
+      <Conditions>
+        <Condition Type="Always" />
+      </Conditions>
+      <Designer Hidden="false" />
+    </Transition>
+    <Transition Name="Wait_to_Rejected" To="Rejected" From="WaitingForDecision" Classifier="Direct" AllowConcatenationType="And" RestrictConcatenationType="And" ConditionsConcatenationType="And" DisableParentStateControl="false">
+      <Triggers>
+        <Trigger Type="Command" NameRef="Reject" />
+      </Triggers>
+      <Conditions>
+        <Condition Type="Always" />
+      </Conditions>
+      <Designer Hidden="false" />
+    </Transition>
+    <Transition Name="Approved_to_Final" To="Final" From="Approved" Classifier="Direct" AllowConcatenationType="And" RestrictConcatenationType="And" ConditionsConcatenationType="And" DisableParentStateControl="false">
+      <Triggers>
+        <Trigger Type="Auto" />
+      </Triggers>
+      <Conditions>
+        <Condition Type="Always" />
+      </Conditions>
+      <Designer Hidden="false" />
+    </Transition>
+    <Transition Name="Rejected_to_Final" To="Final" From="Rejected" Classifier="Direct" AllowConcatenationType="And" RestrictConcatenationType="And" ConditionsConcatenationType="And" DisableParentStateControl="false">
+      <Triggers>
+        <Trigger Type="Auto" />
+      </Triggers>
+      <Conditions>
+        <Condition Type="Always" />
+      </Conditions>
+      <Designer Hidden="false" />
+    </Transition>
+    <Transition Name="Initial_WaitingForDecision_1" To="WaitingForDecision" From="Initial" Classifier="NotSpecified" AllowConcatenationType="And" RestrictConcatenationType="And" ConditionsConcatenationType="And" DisableParentStateControl="false">
+      <Triggers>
+        <Trigger Type="Auto" />
+      </Triggers>
+      <Conditions>
+        <Condition Type="Always" />
+      </Conditions>
+      <Designer Hidden="false" />
+    </Transition>
+  </Transitions>
+</Process>
