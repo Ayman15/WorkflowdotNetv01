@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using OptimaJet.Workflow.Core.Runtime;
@@ -129,56 +128,6 @@ public static class ApprovalService
             return false;
         }
         catch { return p.HasExited; }
-    }
-
-    public static async Task ApproveAndRunViaAgentAsync(
-        Guid processId,
-        string approverIdentity,
-        string agentBaseUrl,  // e.g., "http://SERVER01:5000"
-        string apiKey,
-        string exePath,       // must be whitelisted on the agent
-        string arguments      // file path or args
-    )
-    {
-        await SetParamAsync(processId, "Decision", "Approve(RemoteAgent)");
-
-        using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(15) };
-        http.DefaultRequestHeaders.Add("X-API-KEY", apiKey);
-
-        var req = new
-        {
-            ExePath = exePath,
-            Arguments = arguments
-        };
-
-        var resp = await http.PostAsJsonAsync($"{agentBaseUrl.TrimEnd('/')}/run", req);
-        var content = await resp.Content.ReadAsStringAsync();
-
-        if (!resp.IsSuccessStatusCode)
-            throw new Exception($"Agent returned {resp.StatusCode}: {content}");
-
-        // Optional: parse result to capture exit code/stdout/stderr
-        var result = System.Text.Json.JsonSerializer.Deserialize<AgentRunResult>(content, new System.Text.Json.JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
-
-        await SetParamAsync(processId, "ExeExitCode", (result?.ExitCode ?? -1).ToString());
-        if (!string.IsNullOrWhiteSpace(result?.StdOut)) await SetParamAsync(processId, "ExeStdOut", Trunc(result.StdOut, 4000));
-        if (!string.IsNullOrWhiteSpace(result?.StdErr)) await SetParamAsync(processId, "ExeStdErr", Trunc(result.StdErr, 4000));
-
-        // Approve -> Approved -> Final
-        await ExecuteCommandAsync(processId, "Approve", approverIdentity);
-    }
-
-    private class AgentRunResult
-    {
-        public int ExitCode { get; set; }
-        public string StdOut { get; set; }
-        public string StdErr { get; set; }
-        public string StartedAtUtc { get; set; }
-        public string FinishedAtUtc { get; set; }
-        public long Milliseconds { get; set; }
     }
 
     private static string Trunc(string s, int max) => s?.Length > max ? s.Substring(0, max) : s;
