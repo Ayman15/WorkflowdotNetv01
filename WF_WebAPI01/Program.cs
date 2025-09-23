@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Mail;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -10,7 +11,6 @@ using Microsoft.OpenApi.Models;                // for OpenApiInfo
 using Quartz;
 using Quartz.Impl;
 using OptimaJet.Workflow.Core.Runtime;
-using System.Reflection.Metadata;
 // using WorkflowLib; // <-- UNCOMMENT if your WorkflowInit lives there
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,8 +34,24 @@ WorkflowInit.ConnectionString = conn;
 // ------------------------ Services & Swagger ------------------------
 builder.Services.Configure<ApprovalsOptions>(builder.Configuration.GetSection("Approvals"));
 
+// SMTP: bind "Smtp" (if present) and use real sender
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
+builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+
+// Fallback: if "Smtp" section is empty/missing, read SMTP settings from "Approvals"
+builder.Services.PostConfigure<SmtpOptions>(opt =>
+{
+    if (!string.IsNullOrWhiteSpace(opt.Host)) return; // already configured from "Smtp"
+    var a = builder.Configuration.GetSection("Approvals");
+    opt.Host = a["SmtpHost"] ?? opt.Host;
+    if (int.TryParse(a["SmtpPort"], out var port)) opt.Port = port;
+    if (bool.TryParse(a["SmtpSsl"], out var ssl)) opt.UseSsl = ssl;
+    opt.User = a["SmtpUser"] ?? opt.User;
+    opt.Password = a["SmtpPass"] ?? opt.Password;
+    opt.From = a["From"] ?? opt.From;
+});
+
 builder.Services.AddSingleton<IWellsProvider, MyWellsProvider>();
-builder.Services.AddSingleton<IEmailSender, ConsoleEmailSender>();
 
 // JSON + enum-as-string
 builder.Services.AddControllers()
@@ -81,6 +97,15 @@ app.MapGet("/", () => "SimpleWF Approval API running.").ExcludeFromDescription()
 
 app.Logger.LogInformation("Environment: {env}", app.Environment.EnvironmentName);
 
+// OPTIONAL: quick SMTP test (kept out of Swagger)
+app.MapPost("/approvals/send-test", async (IServiceProvider sp, [FromQuery] string to) =>
+{
+    using var scope = sp.CreateScope();
+    var email = scope.ServiceProvider.GetRequiredService<IEmailSender>();
+    await email.SendAsync(new[] { to }, "SMTP Test", "<b>Hello from SimpleWF</b>");
+    return Results.Ok("Test email sent.");
+}).ExcludeFromDescription();
+
 // ------------------------ Quartz Scheduler ------------------------
 ISchedulerFactory schedFactory = new StdSchedulerFactory();
 var scheduler = await schedFactory.GetScheduler();
@@ -119,16 +144,67 @@ app.Run();
 
 public class ApprovalsOptions
 {
-    public string BaseUrl { get; set; } = "";           // e.g., http://localhost:5062/approvals
+    public string BaseUrl { get; set; } = "";           // e.g., http://host:port/approvals
     public string ApproverEmails { get; set; } = "";
-    public string? ExePath { get; set; }                // local exe path, e.g., C:\Ops\RunWellsIntegrator.exe
-    public string? LogFilePath { get; set; }            // NDJSON log file (relative or absolute)
+    public string? ExePath { get; set; }                // local exe path
+    public string? LogFilePath { get; set; }            // NDJSON log file
 
     // Remote runner settings
-    public string? RemoteRunnerUrl { get; set; }        // e.g., http://server:5005  (remote service base)
-    public string? RemoteRunnerApiKey { get; set; }     // optional shared-secret header X-API-KEY
+    public string? RemoteRunnerUrl { get; set; }        // e.g., http://server:5005
+    public string? RemoteRunnerApiKey { get; set; }     // X-API-KEY
     public int RemoteRunnerTimeoutSeconds { get; set; } = 60;
-    public string? RemoteExePath { get; set; }          // optional: path/name known to remote runner; otherwise it can ignore
+    public string? RemoteExePath { get; set; }
+}
+
+// SMTP config (bound from "Smtp", with fallback from "Approvals" via PostConfigure)
+public class SmtpOptions
+{
+    public string Host { get; set; } = "";
+    public int Port { get; set; } = 25;
+    public bool UseSsl { get; set; } = false;
+    public string User { get; set; } = "";
+    public string Password { get; set; } = "";
+    public string From { get; set; } = "noreply@company.com";
+}
+
+// Real SMTP sender
+public class SmtpEmailSender : IEmailSender
+{
+    private readonly SmtpOptions _opt;
+    private readonly ILogger<SmtpEmailSender> _log;
+
+    public SmtpEmailSender(IOptions<SmtpOptions> opt, ILogger<SmtpEmailSender> log)
+    {
+        _opt = opt.Value;
+        _log = log;
+    }
+
+    public async Task SendAsync(string[] to, string subject, string htmlBody)
+    {
+        if (string.IsNullOrWhiteSpace(_opt.Host))
+            throw new InvalidOperationException("SMTP not configured (Host is empty).");
+
+        using var msg = new MailMessage
+        {
+            From = new MailAddress(_opt.From),
+            Subject = subject,
+            Body = htmlBody,
+            IsBodyHtml = true
+        };
+        foreach (var r in to) msg.To.Add(r);
+
+        using var client = new SmtpClient(_opt.Host, _opt.Port)
+        {
+            EnableSsl = _opt.UseSsl,
+            Credentials = string.IsNullOrWhiteSpace(_opt.User)
+                ? CredentialCache.DefaultNetworkCredentials
+                : new NetworkCredential(_opt.User, _opt.Password)
+        };
+
+        _log.LogInformation("Sending email via {Host}:{Port} to {Recipients}", _opt.Host, _opt.Port, string.Join(",", to));
+        await client.SendMailAsync(msg);
+        _log.LogInformation("Email sent to {Count} recipients.", to.Length);
+    }
 }
 
 public class Well
@@ -155,20 +231,6 @@ public class MyWellsProvider : IWellsProvider
 public interface IEmailSender
 {
     Task SendAsync(string[] to, string subject, string htmlBody);
-}
-
-// For testing: prints the email to console instead of sending
-public class ConsoleEmailSender : IEmailSender
-{
-    public Task SendAsync(string[] to, string subject, string htmlBody)
-    {
-        Console.WriteLine("---- EMAIL ----");
-        Console.WriteLine("To: " + string.Join(",", to));
-        Console.WriteLine("Subject: " + subject);
-        Console.WriteLine(htmlBody);
-        Console.WriteLine("---------------");
-        return Task.CompletedTask;
-    }
 }
 
 // ======================== Simple Audit Logger ========================
@@ -260,8 +322,11 @@ public class DailyJob : IJob
                 $"<a href='{approveUrl}'>Approve</a> | <a href='{rejectUrl}'>Reject</a>" +
                 "</div>";
 
-            var recipients = (opt.ApproverEmails ?? "ops1@company.com;ops2@company.com")
+            var recipients = (opt.ApproverEmails ?? "")
                 .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            if (recipients.Length == 0)
+                throw new InvalidOperationException("Approvals:ApproverEmails is empty.");
 
             await email.SendAsync(recipients, $"New Wells Approval – {DateTime.Now:yyyy-MM-dd}", htmlBody);
             log.LogInformation("Email sent for process {ProcessId} to {Recipients}", processId, recipients);
@@ -329,18 +394,22 @@ public class ApprovalsController : ControllerBase
         return Ok(cmds);
     }
 
+    // GET for email link clicks
     [HttpGet("Decide_By_Email")]
     public Task<IActionResult> DecideByEmail([FromQuery] Guid pid, [FromQuery] string decision)
         => ExecuteDecisionAsync(pid, decision);
 
+    // POST for Swagger "Try it out" (JSON body)
     [HttpPost("Decide_By_Manual_Entry")]
     public Task<IActionResult> DecidePost([FromBody] ApprovalDecisionRequest dto)
         => ExecuteDecisionAsync(dto.pid, dto.decision.ToString());
 
+    // POST /approvals/approve?pid=GUID (Swagger-friendly quick call)
     [HttpPost("Approve_Button")]
     public Task<IActionResult> Approve([FromQuery] Guid pid)
         => ExecuteDecisionAsync(pid, "approve");
 
+    // POST /approvals/reject?pid=GUID (Swagger-friendly quick call)
     [HttpPost("Reject_Button")]
     public Task<IActionResult> Reject([FromQuery] Guid pid)
         => ExecuteDecisionAsync(pid, "reject");
@@ -492,4 +561,3 @@ public class ApprovalsController : ControllerBase
     private static string? Truncate(string? s, int max) =>
         string.IsNullOrEmpty(s) ? s : (s.Length <= max ? s : s.Substring(0, max));
 }
-
