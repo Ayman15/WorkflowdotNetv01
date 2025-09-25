@@ -15,6 +15,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WF_WebAPI01", "WF_WebAPI01\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AF_SCADA_Comparison", "AF_SCADA_Comparison\AF_SCADA_Comparison.csproj", "{B6AC330C-013A-435F-80F2-9D65A9F63390}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AF_SCADA_ComparisonLib", "AF_SCADA_ComparisonLib\AF_SCADA_ComparisonLib.csproj", "{0C8AAC3B-ED5B-4EEB-AC6A-CC6E57D5789C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AF_SCADA Comparison Test", "AF_SCADA Comparison Test\AF_SCADA Comparison Test.csproj", "{3CA06D48-415B-42D2-9B87-01A46A431FB2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +49,14 @@ Global
 		{B6AC330C-013A-435F-80F2-9D65A9F63390}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B6AC330C-013A-435F-80F2-9D65A9F63390}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B6AC330C-013A-435F-80F2-9D65A9F63390}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C8AAC3B-ED5B-4EEB-AC6A-CC6E57D5789C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C8AAC3B-ED5B-4EEB-AC6A-CC6E57D5789C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C8AAC3B-ED5B-4EEB-AC6A-CC6E57D5789C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C8AAC3B-ED5B-4EEB-AC6A-CC6E57D5789C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3CA06D48-415B-42D2-9B87-01A46A431FB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3CA06D48-415B-42D2-9B87-01A46A431FB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3CA06D48-415B-42D2-9B87-01A46A431FB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3CA06D48-415B-42D2-9B87-01A46A431FB2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

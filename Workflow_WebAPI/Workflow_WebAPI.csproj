@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AF_SCADA_ComparisonLib\AF_SCADA_ComparisonLib.csproj" />
     <ProjectReference Include="..\WorkflowLib\WorkflowLib.csproj" />
   </ItemGroup>
 
