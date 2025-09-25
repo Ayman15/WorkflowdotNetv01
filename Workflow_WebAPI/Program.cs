@@ -11,6 +11,7 @@ using Microsoft.OpenApi.Models;                // for OpenApiInfo
 using Quartz;
 using Quartz.Impl;
 using OptimaJet.Workflow.Core.Runtime;
+using AF_SCADA_ComparisonLib;
 // using WorkflowLib; // <-- UNCOMMENT if your WorkflowInit lives there
 
 var builder = WebApplication.CreateBuilder(args);
@@ -51,7 +52,8 @@ builder.Services.PostConfigure<SmtpOptions>(opt =>
     opt.From = a["From"] ?? opt.From;
 });
 
-builder.Services.AddSingleton<IWellsProvider, MyWellsProvider>();
+//builder.Services.AddSingleton<IWellsProvider, MyWellsProvider>();
+builder.Services.AddSingleton<IWellsProvider, WellsComparisonProvider>();
 
 // JSON + enum-as-string
 builder.Services.AddControllers()
@@ -219,13 +221,60 @@ public interface IWellsProvider
     Task<List<Well>> GetNewWellsAsync();
 }
 
-public class MyWellsProvider : IWellsProvider
+//public class MyWellsProvider : IWellsProvider
+//{
+//    public Task<List<Well>> GetNewWellsAsync() => Task.FromResult(new List<Well>
+//    {
+//        new() { Name = "Meliha-01", Type = "SRP", Description = "Sandface recompletion" },
+//        new() { Name = "Meliha-02", Type = "ESP", Description = "Workover complete" }
+//    });
+//}
+
+public class WellsComparisonProvider : IWellsProvider
 {
-    public Task<List<Well>> GetNewWellsAsync() => Task.FromResult(new List<Well>
+    public async Task<List<Well>> GetNewWellsAsync()
     {
-        new() { Name = "Meliha-01", Type = "SRP", Description = "Sandface recompletion" },
-        new() { Name = "Meliha-02", Type = "ESP", Description = "Workover complete" }
-    });
+        // SCADA
+        var scadaReader = new Read_MOWT_MSSQL();
+        var scadaWells = scadaReader.SQL_Reader(); // Dictionary<string, object[]>
+
+        // AF
+        string baseUrl = "https://CXPIPSA01.agiba.local/PIWebAPI"; // Set in config ideally
+        string parentWebId = "F1Emn5pF4QUB9kalAO9DHiZAeAjaorWn_z7xGBqgBQVq7czAQ1hQSVNSVjAxXEFHSUJBMjAyNVxBTExfV0VMTFM";
+
+        var piClient = new PiChildElementsClient(baseUrl);
+        var afRows = await piClient.GetWellsWithScadaStatusAsync(parentWebId);
+
+        // Compare
+        var comparer = new WellComparer();
+        var comparison = comparer.comparewells(scadaWells, afRows);
+
+        // Combine all 3 types into 1 list of `Well`
+        var result = new List<Well>();
+
+        result.AddRange(comparison.newinscada.Select(w => new Well
+        {
+            Name = w.wellname,
+            Type = w.welltype,
+            Description = $"SCADA-only: {w.scadawellname} – Status: {w.scadawellstatus}"
+        }));
+
+        result.AddRange(comparison.typemismatches.Select(w => new Well
+        {
+            Name = w.wellname,
+            Type = w.welltype,
+            Description = $"Type mismatch – AF Template: {w.aftemplate}, Status: {w.scadawellstatus}"
+        }));
+
+        result.AddRange(comparison.scanoff.Select(w => new Well
+        {
+            Name = w.wellname,
+            Type = w.welltype,
+            Description = $"Scan Off – {w.scadawellname}, Status: {w.scadawellstatus}"
+        }));
+
+        return result;
+    }
 }
 
 public interface IEmailSender
@@ -303,24 +352,41 @@ public class DailyJob : IJob
             var wells = await wellsProvider.GetNewWellsAsync();
             var processId = Guid.NewGuid();
 
-            // Build email HTML
-            string HtmlTable(IEnumerable<Well> list)
-            {
-                var rows = string.Join("", list.Select(w =>
-                    $"<tr><td>{WebUtility.HtmlEncode(w.Name)}</td><td>{WebUtility.HtmlEncode(w.Type)}</td><td>{WebUtility.HtmlEncode(w.Description)}</td></tr>"));
-                return $"<table border='1' cellpadding='6' cellspacing='0'><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>{rows}</tbody></table>";
-            }
+            
 
             // Approval links
             var approveUrl = $"{opt.BaseUrl}/Decide_By_Email?pid={processId}&decision=approve";
             var rejectUrl = $"{opt.BaseUrl}/Decide_By_Email?pid={processId}&decision=reject";
 
+           
+
+            string HtmlSection(string title, IEnumerable<Well> wells)
+            {
+                if (!wells.Any()) return $"<h3>{title}</h3><p><i>None</i></p>";
+
+                var rows = string.Join("", wells.Select(w =>
+                    $"<tr><td>{WebUtility.HtmlEncode(w.Name)}</td><td>{WebUtility.HtmlEncode(w.Type)}</td><td>{WebUtility.HtmlEncode(w.Description)}</td></tr>"));
+
+                return $"<h3>{title}</h3>" +
+                       $"<table border='1' cellpadding='6' cellspacing='0'>" +
+                       "<thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>" +
+                       $"<tbody>{rows}</tbody></table><br/>";
+            }
+
+            // Group wells
+            var newInScada = wells.Where(w => w.Description.StartsWith("SCADA-only"));
+            var typeMismatches = wells.Where(w => w.Description.StartsWith("Type mismatch"));
+            var scanOff = wells.Where(w => w.Description.StartsWith("Scan Off"));
+
             var htmlBody =
-                "<h2>New Wells Pending Approval</h2>" +
-                HtmlTable(wells) +
+                "<h2>SCADA vs AF Well Comparison</h2>" +
+                HtmlSection("New Wells in SCADA but not in AF", newInScada) +
+                HtmlSection("Wells with Type (Template) Mismatch", typeMismatches) +
+                HtmlSection("AF Wells with SCADA Status = 'Scan Off'", scanOff) +
                 "<div style='margin-top:16px'>" +
                 $"<a href='{approveUrl}'>Approve</a> | <a href='{rejectUrl}'>Reject</a>" +
                 "</div>";
+
 
             var recipients = (opt.ApproverEmails ?? "")
                 .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -445,42 +511,42 @@ public class ApprovalsController : ControllerBase
             _log.LogInformation("Command executed: pid={Pid}, command={Command}", pid, wanted);
             _ = _audit.Info("command_executed", new { pid, command = wanted });
 
-            //if (wanted == "Approve")
-            //{
-            //    // Run both in parallel (fire both tasks and await)
-            //    var tasks = new List<Task>
-            //    {
-            //        RunLocalExeAsync(pid),
-            //        InvokeRemoteRunnerAsync(pid)
-            //    };
-            //    await Task.WhenAll(tasks);
-            //}
-
-            //return Ok($"Decision recorded as {wanted.ToUpperInvariant()}.");
-            if (wanted == "approve")
+            if (wanted == "Approve")
             {
-                // kick off background work and do not await it
-                _ = task.run(async () =>
+                // Run both in parallel (fire both tasks and await)
+                var tasks = new List<Task>
                 {
-                    try
-                    {
-                        await runlocalexeasync(pid);
-                        await invokeremoterunnerasync(pid);
-                    }
-                    catch (exception bgex)
-                    {
-                        // log any background failure
-                        var sp = httpcontext.requestservices;
-                        var audit = sp.getrequiredservice<iauditlogger>();
-                        var log = sp.getrequiredservice<ilogger<approvalscontroller>>();
-                        log.logerror(bgex, "background approve side-effects failed for {pid}", pid);
-                        await audit.error("approve_background_failed", bgex, new { pid });
-                    }
-                });
+                    RunLocalExeAsync(pid),
+                    InvokeRemoteRunnerAsync(pid)
+                };
+                await Task.WhenAll(tasks);
             }
 
-            // return immediately to the client
-            return Ok(new { message = $"decision recorded as {wanted}", pid });
+            return Ok($"Decision recorded as {wanted.ToUpperInvariant()} & {pid}.");
+            //if (wanted == "Approve")
+            //{
+            //    // kick off background work and do not await it
+            //    _ = Task.Run(async () =>
+            //    {
+            //        try
+            //        {
+            //            await RunLocalExeAsync(pid);
+            //            await InvokeRemoteRunnerAsync(pid);
+            //        }
+            //        catch (Exception bgex)
+            //        {
+            //            // log any background failure
+            //            var sp = HttpContext.RequestServices;
+            //            var audit = sp.GetRequiredService<IAuditLogger>();
+            //            var log = sp.GetRequiredService<ILogger<ApprovalsController>>();
+            //            log.LogError(bgex, "background approve side-effects failed for {pid}", pid);
+            //            await audit.Error("approve_background_failed", bgex, new { pid });
+            //        }
+            //    });
+            //}
+
+            //// return immediately to the client
+            //return Ok(new { message = $"decision recorded as {wanted}", pid });
 
         }
         catch (Exception ex)
@@ -523,7 +589,6 @@ public class ApprovalsController : ControllerBase
         return Task.CompletedTask;
     }
 
-    // ---------- Remote runner via web service ----------
     private async Task InvokeRemoteRunnerAsync(Guid pid)
     {
         if (string.IsNullOrWhiteSpace(_opt.RemoteRunnerUrl))
@@ -534,13 +599,11 @@ public class ApprovalsController : ControllerBase
         }
 
         var http = _http.CreateClient();
-        var url = _opt.RemoteRunnerUrl!.TrimEnd('/') + "/run";
+        var url = _opt.RemoteRunnerUrl!.TrimEnd('/') + "/run-task";
 
         var payload = new
         {
-            exePath = _opt.RemoteExePath,       // optional; remote service may ignore and use its own mapping
-            args = $"--processId {pid}",
-            processId = pid.ToString()
+            taskName = "MyScheduledTask" // <-- match exactly what you used in PowerShell
         };
 
         var json = JsonSerializer.Serialize(payload);
@@ -548,6 +611,7 @@ public class ApprovalsController : ControllerBase
         {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
+
         if (!string.IsNullOrWhiteSpace(_opt.RemoteRunnerApiKey))
             req.Headers.Add("X-API-KEY", _opt.RemoteRunnerApiKey);
 
@@ -560,28 +624,29 @@ public class ApprovalsController : ControllerBase
 
             if (res.IsSuccessStatusCode)
             {
-                _log.LogInformation("Remote run OK. Url={Url} Response={Body}", url, Truncate(body, 1000));
-                _ = _audit.Info("exe_started_remote", new { pid, url, response = Truncate(body, 2000) });
+                _log.LogInformation("Remote task run OK. Url={Url} Response={Body}", url, Truncate(body, 1000));
+                _ = _audit.Info("task_run_remote", new { pid, url, response = Truncate(body, 2000) });
             }
             else
             {
-                _log.LogError("Remote run FAILED ({Status}). Url={Url} Body={Body}", (int)res.StatusCode, url, Truncate(body, 1000));
-                _ = _audit.Error("exe_remote_failed",
+                _log.LogError("Remote task FAILED ({Status}). Url={Url} Body={Body}", (int)res.StatusCode, url, Truncate(body, 1000));
+                _ = _audit.Error("task_run_remote_failed",
                     new Exception($"HTTP {(int)res.StatusCode}"),
                     new { pid, url, response = Truncate(body, 2000) });
             }
         }
         catch (TaskCanceledException)
         {
-            _log.LogError("Remote run TIMEOUT after {s}s. Url={Url}", _opt.RemoteRunnerTimeoutSeconds, url);
-            _ = _audit.Error("exe_remote_timeout", new TimeoutException(), new { pid, url });
+            _log.LogError("Remote task TIMEOUT after {s}s. Url={Url}", _opt.RemoteRunnerTimeoutSeconds, url);
+            _ = _audit.Error("task_run_timeout", new TimeoutException(), new { pid, url });
         }
         catch (Exception ex)
         {
-            _log.LogError(ex, "Remote run EXCEPTION. Url={Url}", url);
-            _ = _audit.Error("exe_remote_exception", ex, new { pid, url });
+            _log.LogError(ex, "Remote task EXCEPTION. Url={Url}", url);
+            _ = _audit.Error("task_run_exception", ex, new { pid, url });
         }
     }
+
 
     private static string? Truncate(string? s, int max) =>
         string.IsNullOrEmpty(s) ? s : (s.Length <= max ? s : s.Substring(0, max));
