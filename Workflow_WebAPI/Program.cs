@@ -382,7 +382,7 @@ public class DailyJob : IJob
                 "<h2>SCADA vs AF Well Comparison</h2>" +
                 HtmlSection("New Wells in SCADA but not in AF", newInScada) +
                 HtmlSection("Wells with Type (Template) Mismatch", typeMismatches) +
-                HtmlSection("AF Wells with SCADA Status = 'Scan Off'", scanOff) +
+                HtmlSection("SCADA Reconnected wells having AF Wells with SCADA Status = 'Scan Off'", scanOff) +
                 "<div style='margin-top:16px'>" +
                 $"<a href='{approveUrl}'>Approve</a> | <a href='{rejectUrl}'>Reject</a>" +
                 "</div>";
